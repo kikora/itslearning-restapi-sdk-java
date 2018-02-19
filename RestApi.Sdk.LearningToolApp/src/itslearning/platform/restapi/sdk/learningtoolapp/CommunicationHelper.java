@@ -40,7 +40,7 @@ public class CommunicationHelper
      */
     public static void initApiSession(HttpServletRequest request, IApplicationSettings settings)
     {
-       
+
         ViewLearningToolRequestParams parameters = getParams(request.getParameterMap());
         ValidateQueryString(request, settings, parameters);
         // Store received parameters to the session state
@@ -109,7 +109,7 @@ public class CommunicationHelper
         String temp = getParams(request.getParameterMap()).getVersion();
         if (temp == null || temp.isEmpty())
         {
-            throw new IllegalArgumentException(Constants.ErrorMessages.VersionNotSpecified);
+            return "N/A";
         }
         return temp;
     }
@@ -192,7 +192,7 @@ public class CommunicationHelper
     }
 
     public static void ValidateQueryString(HttpServletRequest request, IApplicationSettings settings, ViewLearningToolRequestParams parameters)
-    {        
+    {
         if (parameters == null)
         {
             parameters = getParams(request.getParameterMap());
@@ -206,12 +206,12 @@ public class CommunicationHelper
             throw new RuntimeException(ex);
         }
     }
-    
+
     public static void ValidateQueryString(HttpServletRequest request, IApplicationSettings settings)
     {
         ValidateQueryString(request, settings, null);
     }
-    
+
     protected static void validateQueryString(String queryString, String sharedSecret, int requestLifetimeInMinutes,
             ViewLearningToolRequestParams parameters) throws UnsupportedEncodingException
     {
@@ -233,7 +233,7 @@ public class CommunicationHelper
         {
             throw new RuntimeException("Timestamp is not specified.");
         }
-        
+
         Calendar resultdate = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
         try
         {
@@ -250,7 +250,7 @@ public class CommunicationHelper
         tooEarly.setTimeInMillis(tooEarly.getTimeInMillis() - requestLifeTimeInMilliSeconds);
         Calendar tooLate = GregorianCalendar.getInstance(TimeZone.getTimeZone("GMT"));
         tooLate.setTimeInMillis(tooLate.getTimeInMillis() + requestLifeTimeInMilliSeconds);
-        
+
         // Check if resultDate is withing limits of requestLifeTime
         if (resultdate.before(tooEarly) || resultdate.after(tooLate))
         {
@@ -274,10 +274,10 @@ public class CommunicationHelper
 
         // Check signature in order to see that the URL has not been tampered with
         String queryStringWithoutSignature = queryString.replaceFirst(String.format("&Signature=%s", parameters.getSignature()), "");
-        
+
         boolean isUtf8 = itslearning.platform.restApi.sdk.common.entities.Constants.EncodingUtf8.equals(parameters.getEncoding());
-        
-        boolean signatureValid = isUtf8 ? 
+
+        boolean signatureValid = isUtf8 ?
                 CryptographyHelper.computeHash(queryStringWithoutSignature + sharedSecret).equals(parameters.getSignature()) :
                 CryptographyHelper.computeHash(queryStringWithoutSignature + sharedSecret, CryptographyHelper.latin1).equals(parameters.getSignature());
 
@@ -302,10 +302,6 @@ public class CommunicationHelper
         if (parameters.getLearningObjectInstanceId() == null)
         {
             throw new RuntimeException("LearningObjectInstanceId is not specified in the querystring.");
-        }
-        if (parameters.getVersion() == null)
-        {
-            throw new RuntimeException("Version is not specified in the querystring.");
         }
         if (parameters.getPermissions() == null)
         {
@@ -334,7 +330,7 @@ public class CommunicationHelper
         userInfo.setCustom2(parameters.getCustom2());
         userInfo.setCustom3(parameters.getCustom3());
         userInfo.setCustom4(parameters.getCustom4());
-        userInfo.setCustom5(parameters.getCustom5());        
+        userInfo.setCustom5(parameters.getCustom5());
         userInfo.setUserId(parameters.getUserId());
         if ( parameters.getCustomerId() != null )
             userInfo.setCustomerId(parameters.getCustomerId());
@@ -346,20 +342,19 @@ public class CommunicationHelper
             // Set the userRole that we get from it's learning parsed to enum
             userRole = UserRole.valueOf(parameters.getRole());
         }
-        
+
         userInfo.setUserRole(userRole);
 
         try
         {
             userInfo.setSchools(buildSchoolInfoList(parameters.getSchoolId()));
         }
-
         catch(ParseException pe)
         {
             // Invalid format on the request parameter value 'SchoolId'.
             throw new RuntimeException("Invalid format on the request parameter value 'SchoolId': "+parameters.getSchoolId(), pe);
         }
-	
+
 
         ApiSession apiSession = constructApiSession(parameters.getApiSessionId(), applicationKey, sharedSecret);
 
@@ -413,7 +408,7 @@ public class CommunicationHelper
 
     /**
      * Parses the SchoolId request string and builds a list of SchoolInfo objects.
-     * 
+     *
      * @param schoolIdParameter The string received from the request containing a comma separated list of 'schoolId'|'legalId' pairs.
      * @return
      * @throws ParseException if we encounter a non-numeric schoolId.
